@@ -7,7 +7,6 @@ package localsocket
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -83,28 +82,45 @@ func TestTMPDIRIgnoredOnLinux(t *testing.T) {
 // valid candidate, resolution and Listen fail with ErrNoRuntimeDir and nothing
 // is created.
 func TestNoValidCandidateReturnsErrNoRuntimeDir(t *testing.T) {
-	bad := t.TempDir()
-	if err := os.Chmod(bad, 0o777); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("XDG_RUNTIME_DIR", bad)
-	t.Setenv("XDG_CACHE_HOME", bad)
-	t.Setenv("HOME", bad)
+	// The candidate chain is injected rather than driven through the
+	// environment. Driving it through $XDG_RUNTIME_DIR and friends leaves
+	// /run/user/$UID in the list, which exists on every systemd host, so the
+	// test skipped itself everywhere it mattered and criterion 1.4 was never
+	// actually exercised.
+	t.Run("empty candidate set", func(t *testing.T) {
+		restore := runtimeDirCandidatesFn
+		runtimeDirCandidatesFn = func(string) []string { return nil }
+		t.Cleanup(func() { runtimeDirCandidatesFn = restore })
 
-	runUser := fmt.Sprintf("/run/user/%d", os.Getuid())
-	if _, err := os.Stat(runUser); err == nil {
-		t.Skipf("%s exists in this environment; cannot force ErrNoRuntimeDir", runUser)
-	}
+		if _, err := resolveRuntimeDir(""); !errors.Is(err, ErrNoRuntimeDir) {
+			t.Fatalf("want ErrNoRuntimeDir, got %v", err)
+		}
+		if _, err := Listen(UserScoped("nowhere"), ListenOptions{}); !errors.Is(err, ErrNoRuntimeDir) {
+			t.Fatalf("Listen: want ErrNoRuntimeDir, got %v", err)
+		}
+	})
 
-	if _, err := resolveRuntimeDir(""); !errors.Is(err, ErrNoRuntimeDir) {
-		t.Fatalf("resolveRuntimeDir = %v, want ErrNoRuntimeDir", err)
-	}
+	t.Run("every candidate fails validation", func(t *testing.T) {
+		bad := t.TempDir()
+		if err := os.Chmod(bad, 0o777); err != nil {
+			t.Fatal(err)
+		}
+		missing := filepath.Join(t.TempDir(), "does-not-exist")
+		notADir := filepath.Join(t.TempDir(), "file")
+		if err := os.WriteFile(notADir, []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
 
-	_, err := Listen(UserScoped("nocandidate"), ListenOptions{})
-	if !errors.Is(err, ErrNoRuntimeDir) {
-		t.Fatalf("Listen = %v, want ErrNoRuntimeDir", err)
-	}
-	if _, err := os.Stat(filepath.Join(bad, "interprocess-go")); !os.IsNotExist(err) {
-		t.Fatal("Listen must not create anything inside a rejected candidate")
-	}
+		restore := runtimeDirCandidatesFn
+		runtimeDirCandidatesFn = func(string) []string { return []string{bad, missing, notADir} }
+		t.Cleanup(func() { runtimeDirCandidatesFn = restore })
+
+		if _, err := resolveRuntimeDir(""); !errors.Is(err, ErrNoRuntimeDir) {
+			t.Fatalf("want ErrNoRuntimeDir, got %v", err)
+		}
+		// Nothing may be created inside a rejected candidate.
+		if _, err := os.Stat(filepath.Join(bad, "interprocess-go")); !os.IsNotExist(err) {
+			t.Fatalf("a rejected candidate must not be written to, err=%v", err)
+		}
+	})
 }

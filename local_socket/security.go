@@ -14,6 +14,12 @@ import (
 	"syscall"
 )
 
+// runtimeDirCandidatesFn builds the candidate list. It is a variable so tests
+// can force an empty or restricted set; criterion 1.4 (ErrNoRuntimeDir) is
+// otherwise unreachable on any systemd host, because /run/user/$UID always
+// exists there. Production code never reassigns it.
+var runtimeDirCandidatesFn = runtimeDirCandidates
+
 // runtimeDirCandidates returns the runtime-directory candidates in Decision 2
 // precedence order. The $TMPDIR step is gated to Darwin; /run/user/$UID to
 // Linux. No candidate is trusted: each is validated before use.
@@ -42,7 +48,7 @@ func runtimeDirCandidates(explicit string) []string {
 // resolveRuntimeDir returns the first candidate that passes validation, or
 // ErrNoRuntimeDir. A failing candidate is skipped, never repaired.
 func resolveRuntimeDir(explicit string) (string, error) {
-	for _, c := range runtimeDirCandidates(explicit) {
+	for _, c := range runtimeDirCandidatesFn(explicit) {
 		if err := validateRuntimeDir(c); err == nil {
 			return c, nil
 		}

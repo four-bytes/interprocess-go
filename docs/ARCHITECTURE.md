@@ -175,7 +175,7 @@ type ListenOptions struct {
     Access              AccessPolicy
     RuntimeDir          string
     ReclaimStale        bool
-    RemoveOnClose       bool
+    KeepOnClose         bool
     PipeSecurity        *PipeSecurity
     MaxInstances        int
 }
@@ -219,7 +219,7 @@ Before binding to a file socket:
 5. Bind the UDS.
 6. Set and verify restrictive mode bits.
 
-On `Close()` the listener should remove its own socket file. Rust `interprocess` also treats automatic name release on listener drop as part of local socket semantics; the Go variant should satisfy that expectation with an explicit `Close()`.
+On `Close()` the listener removes its own socket file by default (`KeepOnClose` opts out). Rust `interprocess` also treats automatic name release on listener drop as part of local socket semantics; the Go variant should satisfy that expectation with an explicit `Close()`.
 
 ### Windows Security
 

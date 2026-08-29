@@ -40,7 +40,7 @@ func echoServer(t *testing.T, ln net.Listener) {
 }
 
 func TestEchoUserScoped(t *testing.T) {
-	ln, err := Listen(UserScoped("echo"), ListenOptions{ReclaimStale: true, RemoveOnClose: true})
+	ln, err := Listen(UserScoped("echo"), ListenOptions{ReclaimStale: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func TestEchoUserScoped(t *testing.T) {
 }
 
 func TestEchoNamespaced(t *testing.T) {
-	ln, err := Listen(Namespaced("nsecho"), ListenOptions{ReclaimStale: true, RemoveOnClose: true})
+	ln, err := Listen(Namespaced("nsecho"), ListenOptions{ReclaimStale: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,7 +99,7 @@ func TestEchoNamespaced(t *testing.T) {
 
 func TestEchoFilesystem(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "fs.sock")
-	ln, err := Listen(Filesystem(path), ListenOptions{RemoveOnClose: true})
+	ln, err := Listen(Filesystem(path), ListenOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,7 +196,7 @@ func TestRestartAfterCrash(t *testing.T) {
 		t.Fatalf("socket file should remain after crash: %v", err)
 	}
 
-	ln, err := Listen(Filesystem(path), ListenOptions{ReclaimStale: true, RemoveOnClose: true})
+	ln, err := Listen(Filesystem(path), ListenOptions{ReclaimStale: true})
 	if err != nil {
 		t.Fatalf("restart after crash failed: %v", err)
 	}
@@ -247,7 +247,7 @@ func TestCloseUnblocksAccept(t *testing.T) {
 
 func TestCloseRemovesSocket(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "remove.sock")
-	ln1, err := Listen(Filesystem(path), ListenOptions{RemoveOnClose: true})
+	ln1, err := Listen(Filesystem(path), ListenOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -300,7 +300,7 @@ func TestDialContextDeadline(t *testing.T) {
 
 func TestDialTimeoutOption(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "timeout.sock")
-	ln, err := Listen(Filesystem(path), ListenOptions{RemoveOnClose: true})
+	ln, err := Listen(Filesystem(path), ListenOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -315,7 +315,7 @@ func TestDialTimeoutOption(t *testing.T) {
 
 func TestPeerIdentity(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "peer.sock")
-	ln, err := Listen(Filesystem(path), ListenOptions{RemoveOnClose: true})
+	ln, err := Listen(Filesystem(path), ListenOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -370,7 +370,7 @@ func TestPeerIdentity(t *testing.T) {
 
 func TestConcurrentEcho64x1MiB(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "echo.sock")
-	ln, err := Listen(Filesystem(path), ListenOptions{RemoveOnClose: true})
+	ln, err := Listen(Filesystem(path), ListenOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -447,8 +447,12 @@ func TestConcurrentEcho64x1MiB(t *testing.T) {
 	<-serverDone
 }
 
-func TestRemoveOnCloseDefaultLeavesSocket(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "keep.sock")
+// TestCloseRemovesSocketByDefault covers criterion 1.7: Close releases the
+// listener's own socket file and a second Listen on the same name succeeds --
+// with no options set. A service that cannot restart on default settings is a
+// defect, not a conservative default.
+func TestCloseRemovesSocketByDefault(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "restart.sock")
 	ln, err := Listen(Filesystem(path), ListenOptions{})
 	if err != nil {
 		t.Fatal(err)
@@ -456,13 +460,37 @@ func TestRemoveOnCloseDefaultLeavesSocket(t *testing.T) {
 	if err := ln.Close(); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(path); err != nil {
-		t.Fatalf("socket file must remain when RemoveOnClose is unset: %v", err)
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatalf("socket file must be gone after Close by default, err=%v", err)
 	}
-	// Reclaim it so the temp dir is left clean.
-	ln2, err := Listen(Filesystem(path), ListenOptions{ReclaimStale: true, RemoveOnClose: true})
+
+	ln2, err := Listen(Filesystem(path), ListenOptions{})
 	if err != nil {
-		t.Fatalf("reclaim after default close failed: %v", err)
+		t.Fatalf("second Listen after a clean Close must succeed without options: %v", err)
+	}
+	ln2.Close()
+}
+
+// TestKeepOnCloseLeavesSocket covers the opt-out: KeepOnClose leaves the file
+// for a supervisor or socket-activation setup that owns the endpoint.
+func TestKeepOnCloseLeavesSocket(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "keep.sock")
+	ln, err := Listen(Filesystem(path), ListenOptions{KeepOnClose: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ln.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("socket file must remain when KeepOnClose is set: %v", err)
+	}
+	if _, err := Listen(Filesystem(path), ListenOptions{}); !errors.Is(err, ErrAlreadyInUse) {
+		t.Fatalf("want ErrAlreadyInUse without ReclaimStale, got %v", err)
+	}
+	ln2, err := Listen(Filesystem(path), ListenOptions{ReclaimStale: true})
+	if err != nil {
+		t.Fatalf("reclaim of a kept socket failed: %v", err)
 	}
 	ln2.Close()
 }
@@ -470,7 +498,7 @@ func TestRemoveOnCloseDefaultLeavesSocket(t *testing.T) {
 func TestLongNameResolution(t *testing.T) {
 	base := t.TempDir()
 	long := strings.Repeat("a", 200)
-	ln, err := Listen(UserScoped(long), ListenOptions{RuntimeDir: base, RemoveOnClose: true})
+	ln, err := Listen(UserScoped(long), ListenOptions{RuntimeDir: base})
 	if err != nil {
 		t.Fatal(err)
 	}

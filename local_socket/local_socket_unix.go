@@ -40,10 +40,10 @@ func Listen(name Name, options ListenOptions) (net.Listener, error) {
 		return nil, err
 	}
 
-	// Name release is opt-in: Go's UnixListener unlinks on Close by default,
-	// so disable it unless the caller asked for it.
+	// Go's UnixListener unlinks a socket it created when Close is called,
+	// which is the behaviour we want by default. KeepOnClose opts out.
 	ul := ln.(*net.UnixListener)
-	ul.SetUnlinkOnClose(options.RemoveOnClose)
+	ul.SetUnlinkOnClose(!options.KeepOnClose)
 
 	// Step 6: set restrictive mode bits and keep them.
 	if err := os.Chmod(path, 0o600); err != nil {

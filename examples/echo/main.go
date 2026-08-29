@@ -38,7 +38,7 @@ func main() {
 func runServer(name, runtimeDir string) {
 	ln, err := localsocket.Listen(
 		localsocket.UserScoped(name),
-		localsocket.ListenOptions{RuntimeDir: runtimeDir, ReclaimStale: true, RemoveOnClose: true},
+		localsocket.ListenOptions{RuntimeDir: runtimeDir, ReclaimStale: true},
 	)
 	if err != nil {
 		log.Fatal(err)

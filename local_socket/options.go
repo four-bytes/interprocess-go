@@ -45,11 +45,20 @@ type ListenOptions struct {
 	// always yields ErrAlreadyInUse, whether or not ReclaimStale is set.
 	ReclaimStale bool
 
-	// RemoveOnClose, when true, removes the listener's own socket file when
-	// Close is called, releasing the name for the next listener. The zero
-	// value leaves the file behind; a later Listen must then reclaim it via
-	// ReclaimStale or fail with ErrAlreadyInUse.
-	RemoveOnClose bool
+	// KeepOnClose, when true, leaves the listener's own socket file behind
+	// when Close is called. The zero value removes it, releasing the name so
+	// the next Listen succeeds without needing ReclaimStale.
+	//
+	// The default is deliberate and asymmetric with ReclaimStale: remove what
+	// this process created, never touch what it did not. Leaving our own
+	// socket behind by default would mean no service could restart cleanly
+	// without opting in, and would diverge from both Go (net.UnixListener
+	// unlinks a socket it created) and Rust interprocess (name release is part
+	// of local-socket semantics).
+	//
+	// Set it when the path is handed to something else -- socket activation,
+	// or a supervisor that owns the endpoint's lifetime.
+	KeepOnClose bool
 }
 
 // DialOptions configures a Dial call.
