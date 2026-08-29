@@ -66,7 +66,7 @@ These are not preferences. A change that breaks one is a defect, not a trade-off
 
 ## Tech Stack
 
-- Go 1.24+, `CGO_ENABLED=0`
+- Go 1.25+, `CGO_ENABLED=0`
 - Standard library only on Unix; `github.com/Microsoft/go-winio` on Windows
 - Apache-2.0
 

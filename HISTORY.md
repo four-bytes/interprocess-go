@@ -37,6 +37,7 @@
 
 ### Technical Details
 - Module path: `github.com/four-bytes/interprocess-go`
-- Go 1.24 minimum; standard library only on Unix, `Microsoft/go-winio` on Windows
+- Go 1.25 minimum (raised from 1.24: `golang.org/x/sys` v0.47.0 declares `go 1.25.0`, so a 1.24
+  toolchain cannot build this module); `golang.org/x/sys` on Darwin, `Microsoft/go-winio` on Windows
 - Phase 1 (Unix core) implemented (#1); Windows (Phase 2), interop (Phase 3) and framing
   (Phase 4) remain.
