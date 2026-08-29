@@ -21,7 +21,8 @@ rather than an option. Small enough to audit in an afternoon.
 - [ ] Stale-socket reclaim, restricted to owned sockets
 - [ ] `PeerIdentity` via `SO_PEERCRED` / `getpeereid`
 - [ ] `examples/echo`
-- [ ] Suite verified locally on Linux and macOS with `-race`
+- [x] Suite verified locally on Linux with `-race`
+- [ ] macOS runtime verification — blocked, no hardware; cross-compile and vet are green
 
 14 acceptance criteria — see `docs/TESTING.md`.
 
