@@ -1,0 +1,25 @@
+# Build output
+/bin/
+*.exe
+*.test
+*.out
+
+# Go
+/vendor/
+go.work
+go.work.sum
+
+# Local, machine-specific — never committed
+*.local.md
+.env
+.env.*
+!.env.example
+
+# Editors
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Fuzz corpus artifacts (crashers are committed, cache is not)
+/framing/testdata/fuzz/*/[0-9a-f]*

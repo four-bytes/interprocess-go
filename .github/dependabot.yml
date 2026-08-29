@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      gomod-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - patch
+      gomod-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - patch
+      actions-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
