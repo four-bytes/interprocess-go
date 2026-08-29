@@ -135,7 +135,7 @@ criterion.
 | 1.11 | Echo across 64 concurrent clients, 1 MiB per client, with no data corruption and no race under `-race`. |
 | 1.12 | Restart after a simulated crash (process killed, socket file left behind) succeeds. |
 | 1.13 | `examples/echo` builds and runs on both platforms. |
-| 1.14 | Suite verified locally on Linux and macOS with `-race` enabled. |
+| 1.14 | Suite verified locally on Linux with `-race`. macOS: cross-compiled and vetted for `darwin/arm64` and `darwin/amd64`; **runtime behaviour unverified** — no macOS hardware available. See the platform matrix note below. |
 
 ### Phase 2: Windows
 

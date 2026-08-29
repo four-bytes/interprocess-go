@@ -24,6 +24,12 @@
   what this process created, never touch what it did not.
 
 ### Fixed
+- `peer_darwin.go` called `syscall.Getpeereid`, which does not exist in the standard library on
+  any platform — the macOS build never compiled (#1). Replaced with
+  `golang.org/x/sys/unix.GetsockoptXucred(fd, SOL_LOCAL, LOCAL_PEERCRED)`, the actual macOS
+  primitive; `struct xucred` carries no PID, so `PeerIdentity.PID` stays zero there as documented.
+  Adds `golang.org/x/sys` as the single dependency. Cross-compilation for every supported platform
+  is now part of the documented local gate, because it catches this whole class for free.
 - Criterion 1.4 (`ErrNoRuntimeDir`) was unreachable: the test skipped itself whenever
   `/run/user/$UID` existed, which is every systemd host (#1). The candidate chain is now injectable
   and the test covers both an empty set and a set where every candidate fails validation, plus the

@@ -21,6 +21,8 @@ service registry, no process management, no discovery — those belong to the ap
 | `go test -fuzz FuzzReadFrame ./framing` | Fuzz the frame reader |
 | `go vet ./...` | Static analysis |
 | `gofmt -l .` | List unformatted files (must be empty) |
+| `GOOS=darwin GOARCH=arm64 go build ./...` | Cross-compile macOS — mandatory before every commit |
+| `GOOS=windows GOARCH=amd64 go build ./...` | Cross-compile Windows (from Phase 2) |
 
 **Quality is local.** There is no test CI. `.github/workflows/` holds deploy and release
 workflows only; running the gate is the author's job, on every platform the change touches.
