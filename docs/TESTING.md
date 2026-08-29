@@ -60,7 +60,7 @@ Windows  \\.\pipe\interprocess-go\<user-sid>\<id>     DACL: current user SID onl
 
 ### V4 — Interop
 
-Go listener ↔ Rust client and Rust listener ↔ Go client, on every platform in the CI matrix,
+Go listener ↔ Rust client and Rust listener ↔ Go client, on every platform in the support matrix,
 exchanging every V1 vector and asserting byte equality in both directions. A vector that only one
 language can produce is not a contract.
 
@@ -83,7 +83,7 @@ language can produce is not a contract.
 - context cancel during dial
 - restart after a clean close
 - restart after a simulated crash, i.e. a stale Unix socket
-- permission/DACL tests, as far as the CI runner reliably allows
+- permission/DACL tests, run on a real machine of that platform
 
 ### Interop Tests
 
@@ -91,15 +91,22 @@ language can produce is not a contract.
 - byte-exact test vector for the reference frames
 - versioned test scenarios in the repository, not just manual demos
 
-### CI Matrix
+### Platform Matrix — Run Locally
+
+There is no test CI. `.github/workflows/` carries deploy and release workflows only; runner
+minutes are not spent re-running a gate that already passed on the author's machine.
 
 ```text
-ubuntu-latest
-macos-latest
-windows-latest
-Go: supported Go versions
-Rust: stable toolchain for the interop example
+Linux    required before merging any change to Unix code
+macOS    required before merging any change to Unix code
+Windows  required before merging any change to named-pipe code
+Go       the supported Go versions
+Rust     stable toolchain, for the interop harness
 ```
+
+A change confined to documentation or to one platform's files needs only that platform. A change
+to shared code — name validation, framing, options — needs all of them. "Someone else will run it"
+is how a platform bug ships.
 
 ---
 
@@ -128,7 +135,7 @@ criterion.
 | 1.11 | Echo across 64 concurrent clients, 1 MiB per client, with no data corruption and no race under `-race`. |
 | 1.12 | Restart after a simulated crash (process killed, socket file left behind) succeeds. |
 | 1.13 | `examples/echo` builds and runs on both platforms. |
-| 1.14 | CI green on `ubuntu-latest` and `macos-latest`, `-race` enabled. |
+| 1.14 | Suite verified locally on Linux and macOS with `-race` enabled. |
 
 ### Phase 2: Windows
 
@@ -141,7 +148,7 @@ criterion.
 | 2.5 | `Filesystem(path)` returns `ErrUnsupportedName` on Windows — explicitly, never a silent fallback. |
 | 2.6 | `PeerIdentity()` returns the client SID (`GetNamedPipeClientProcessId`, then the process token). |
 | 2.7 | Every Phase 1 behavioural test that is not Unix-specific passes unchanged on Windows: echo, 64 concurrent clients, `Close` unblocks `Accept`, dial cancellation, restart. |
-| 2.8 | CI green on `windows-latest`. |
+| 2.8 | Suite verified locally on Windows. |
 
 ### Phase 3: Parity and Interop
 
@@ -161,7 +168,7 @@ criterion.
 | 4.2 | Every **V2** reader case passes: fragmented prefix, fragmented payload, clean `io.EOF` at a boundary, `ErrShortFrame` on truncation, two frames in one buffer. |
 | 4.3 | A declared length above `maxSize` returns `ErrFrameTooLarge` **without allocating**, proven by a test whose declared length would exhaust memory if allocated first. |
 | 4.4 | `io.EOF` and `ErrShortFrame` are distinguishable by `errors.Is`. |
-| 4.5 | A fuzz target over `ReadFrame` runs in CI with no crashers, and its corpus is committed. |
+| 4.5 | A fuzz target over `ReadFrame` runs locally with no crashers, and its corpus is committed. |
 | 4.6 | `examples/request_reply` demonstrates a versioned JSON envelope over the framing. |
 
 ---

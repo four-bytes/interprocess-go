@@ -5,7 +5,7 @@
 1. **Issue first** — every change starts with a GitHub issue stating purpose, scope and acceptance criteria.
 2. **Branch** — `feat/GH-{issue}-description`, `fix/GH-{issue}-description`, etc.
 3. **Code** — follow `GUIDELINES.md`.
-4. **Test** — `go test -race ./...` must pass on your platform, and CI on all three.
+4. **Test** — the local gate must pass (below). There is no CI safety net.
 5. **PR** — open a pull request, link the issue, complete the checklist.
 6. **Review** — merge only when green.
 7. **Cleanup** — squash-merge, delete the branch.
@@ -32,11 +32,23 @@ chore/GH-{nr}-short-description
 docs/GH-{nr}-short-description
 ```
 
+## The Local Gate
+
+Quality is local. `.github/workflows/` carries deploy and release workflows only — nothing in
+this repository verifies your change for you after you push.
+
+```sh
+gofmt -l .            # must print nothing
+go vet ./...          # must be clean
+go test -race ./...   # must pass
+```
+
+A change that touches platform-specific code must be run on that platform before merge. Claiming
+"CI will catch it" is not available here, by design.
+
 ## Before You Open a PR
 
-- `gofmt -l .` prints nothing
-- `go vet ./...` is clean
-- `go test -race ./...` passes
+- The local gate above is green
 - `HISTORY.md` has an entry under `[Unreleased]`
 - No new dependency without a note in the PR describing why the standard library is insufficient
 

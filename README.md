@@ -52,6 +52,9 @@ remove the only access control this library has on Unix. See [`GUIDELINES.md`](G
 | macOS | Unix domain socket | Phase 1 |
 | Windows | Named pipe (`go-winio`) | Phase 2 |
 
+Each platform is verified by running the suite on it. A change to platform-specific code is not
+mergeable until it has been run there — see [`CONTRIBUTE.md`](CONTRIBUTE.md).
+
 ## Framing
 
 Local sockets are byte streams and do not preserve message boundaries. The `framing` subpackage
@@ -79,7 +82,7 @@ than both computing a name. See [`docs/INTEROP.md`](docs/INTEROP.md).
 |---|---|
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Package layout, name resolution, platform differences |
 | [`docs/INTEROP.md`](docs/INTEROP.md) | Rust parity, the naming hazard, conformance vectors |
-| [`docs/TESTING.md`](docs/TESTING.md) | Test architecture, vectors, fuzzing, CI matrix |
+| [`docs/TESTING.md`](docs/TESTING.md) | Test architecture, vectors, fuzzing, platform matrix |
 | [`GUIDELINES.md`](GUIDELINES.md) | Coding standards and security invariants |
 | [`CONTRIBUTE.md`](CONTRIBUTE.md) | Issue → Branch → PR workflow |
 | [`ROADMAP.md`](ROADMAP.md) | Phases and target versions |

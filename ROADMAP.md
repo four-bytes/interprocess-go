@@ -21,7 +21,7 @@ rather than an option. Small enough to audit in an afternoon.
 - [ ] Stale-socket reclaim, restricted to owned sockets
 - [ ] `PeerIdentity` via `SO_PEERCRED` / `getpeereid`
 - [ ] `examples/echo`
-- [ ] CI green on `ubuntu-latest` and `macos-latest` with `-race`
+- [ ] Suite verified locally on Linux and macOS with `-race`
 
 14 acceptance criteria — see `docs/TESTING.md`.
 
@@ -33,7 +33,7 @@ rather than an option. Small enough to audit in an afternoon.
 - [ ] Name resolution to `\\.\pipe\interprocess-go\<user-sid>\<id>`
 - [ ] DACL restricted to the current user SID; logon session opt-in
 - [ ] `PeerIdentity` via `GetNamedPipeClientProcessId`
-- [ ] CI green on `windows-latest`
+- [ ] Suite verified locally on Windows
 
 ---
 
