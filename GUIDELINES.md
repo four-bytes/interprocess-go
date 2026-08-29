@@ -9,7 +9,7 @@
 
 ## Code Style
 
-- `gofmt` is the formatter; CI fails on any unformatted file
+- `gofmt` is the formatter; `gofmt -l .` must print nothing before commit
 - Tabs for indentation, LF endings, UTF-8
 - Platform files use build tags — `//go:build unix` and `//go:build windows`
 - Exported identifiers carry doc comments beginning with the identifier name

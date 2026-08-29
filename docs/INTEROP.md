@@ -26,7 +26,7 @@ Protocol
   versioned command/event schema
 ```
 
-A CI test must verify both directions:
+An automated test must verify both directions, run locally on each platform:
 
 - Rust listener, Go client
 - Go listener, Rust client

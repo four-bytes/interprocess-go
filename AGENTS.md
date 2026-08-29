@@ -22,6 +22,9 @@ service registry, no process management, no discovery — those belong to the ap
 | `go vet ./...` | Static analysis |
 | `gofmt -l .` | List unformatted files (must be empty) |
 
+**Quality is local.** There is no test CI. `.github/workflows/` holds deploy and release
+workflows only; running the gate is the author's job, on every platform the change touches.
+
 ## Architecture
 
 - **`local_socket/`** — the public API: `Name`, `Listen`, `Dial`, options, security, peer identity
