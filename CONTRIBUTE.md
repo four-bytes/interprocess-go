@@ -38,13 +38,27 @@ Quality is local. `.github/workflows/` carries deploy and release workflows only
 this repository verifies your change for you after you push.
 
 ```sh
-gofmt -l .            # must print nothing
-go vet ./...          # must be clean
-go test -race ./...   # must pass
+gofmt -l .                          # must print nothing
+go vet ./...                        # must be clean
+go test -race ./...                 # must pass
+
+GOOS=darwin  GOARCH=arm64 go build ./...   # cross-compile every supported platform
+GOOS=darwin  GOARCH=amd64 go build ./...
+GOOS=windows GOARCH=amd64 go build ./...   # from Phase 2 on
 ```
 
-A change that touches platform-specific code must be run on that platform before merge. Claiming
-"CI will catch it" is not available here, by design.
+**Cross-compile every supported platform, always.** It needs no hardware, takes a second, and
+catches the entire class of "this function does not exist on that OS" — which is exactly how a
+`syscall.Getpeereid` that never existed reached `main` once. Compiling is not testing, but a
+platform file that does not compile is not a testing gap, it is a broken build.
+
+A change that touches platform-specific code should be run on that platform before merge.
+Claiming "CI will catch it" is not available here, by design.
+
+**Where you cannot run a platform, say so in the PR.** macOS is currently in that position: the
+maintainer has no Mac, so the darwin path is cross-compiled and vetted but never executed. An
+honest gap that is written down can be closed by someone who has the hardware; a gap that is
+implied to be covered cannot.
 
 ## Before You Open a PR
 

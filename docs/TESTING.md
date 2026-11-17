@@ -125,17 +125,17 @@ criterion.
 | 1.1 | `Listen` and `Dial` work for `Filesystem`, `Namespaced` and `UserScoped` on Linux and macOS. |
 | 1.2 | Name validation matches vector **V3** exactly, including the 200-character case and the Decision 6 truncation output. |
 | 1.3 | Runtime directory resolution follows Decision 2 in order, and **every** candidate is rejected unless it exists, is a directory, is owned by the current UID, and has no group or world write bit. A test sets `$TMPDIR` to a `0777` directory on Linux and asserts it is skipped. |
-| 1.4 | With no valid candidate, `Listen` fails with `ErrNoRuntimeDir` and creates nothing. |
+| 1.4 | With no valid candidate, `Listen` fails with `ErrNoRuntimeDir` and creates nothing. The candidate chain is injected in the test — driving it through the environment leaves `/run/user/$UID` in the list on every systemd host, so the test would skip itself exactly where it matters. |
 | 1.5 | After `Listen`, the runtime directory is mode `0700` and the socket file is mode `0600`, asserted by `os.Stat`. |
 | 1.6 | Stale-socket reclaim follows the documented six steps. A test writes a **regular file** at the socket path and asserts `ErrStaleCleanupUnsafe` — only an owned socket is ever removed. |
-| 1.7 | `Close()` removes the listener's own socket file; a second `Listen` on the same name then succeeds. |
+| 1.7 | `Close()` removes the listener's own socket file **with no options set**; a second `Listen` on the same name then succeeds. `KeepOnClose` opts out. A default that cannot restart is a defect, not caution. |
 | 1.8 | `Close()` causes a blocked `Accept()` to return, and the returned error satisfies `errors.Is(err, net.ErrClosed)`. |
 | 1.9 | `Dial` honours context cancellation and `DialOptions.Timeout`; a cancelled dial returns promptly and leaks no goroutine (`goleak` or an equivalent check). |
 | 1.10 | `PeerIdentity()` returns the correct UID and GID (`SO_PEERCRED` on Linux, `getpeereid` on macOS). |
 | 1.11 | Echo across 64 concurrent clients, 1 MiB per client, with no data corruption and no race under `-race`. |
 | 1.12 | Restart after a simulated crash (process killed, socket file left behind) succeeds. |
 | 1.13 | `examples/echo` builds and runs on both platforms. |
-| 1.14 | Suite verified locally on Linux and macOS with `-race` enabled. |
+| 1.14 | Suite verified locally on Linux with `-race`. macOS: cross-compiled and vetted for `darwin/arm64` and `darwin/amd64`; **runtime behaviour unverified** — no macOS hardware available. See the platform matrix note below. |
 
 ### Phase 2: Windows
 

@@ -2,7 +2,7 @@
 
 ## Tech Stack
 
-- Runtime: Go 1.24+, `CGO_ENABLED=0` for builds
+- Runtime: Go 1.25+, `CGO_ENABLED=0` for builds
 - Language: Go
 - Dependencies: standard library only on Unix; `github.com/Microsoft/go-winio` on Windows
 - License: Apache-2.0

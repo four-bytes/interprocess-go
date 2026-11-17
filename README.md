@@ -46,14 +46,29 @@ remove the only access control this library has on Unix. See [`GUIDELINES.md`](G
 
 ## Platform support
 
-| Platform | Transport | Status |
-|---|---|---|
-| Linux | Unix domain socket | Phase 1 |
-| macOS | Unix domain socket | Phase 1 |
-| Windows | Named pipe (`go-winio`) | Phase 2 |
+| Platform | Transport | Status | Verification |
+|---|---|---|---|
+| Linux | Unix domain socket | Phase 1 | suite run with `-race` |
+| macOS | Unix domain socket | Phase 1 | **compiles and vets only — runtime untested** |
+| Windows | Named pipe (`go-winio`) | Phase 2 | — |
 
-Each platform is verified by running the suite on it. A change to platform-specific code is not
-mergeable until it has been run there — see [`CONTRIBUTE.md`](CONTRIBUTE.md).
+### macOS is untested at runtime
+
+Be aware of this before depending on the macOS path. The code cross-compiles and vets cleanly for
+`darwin/arm64` and `darwin/amd64`, and every cross-platform code path is covered by the suite on
+Linux. What has never executed on a Mac:
+
+- `peerCred` via `getsockopt(SOL_LOCAL, LOCAL_PEERCRED)` — the returned UID and GID are unverified
+- the Darwin-only `$TMPDIR` step of the runtime-directory precedence
+- socket and directory mode enforcement on APFS
+
+The maintainer has no macOS hardware. This is stated rather than papered over: a green
+cross-compile proves the code exists and type-checks, not that it behaves. Reports from macOS
+users are welcome, and a verified run is what moves this row to parity with Linux.
+
+A change to platform-specific code should be run on that platform before merge — see
+[`CONTRIBUTE.md`](CONTRIBUTE.md). Where that is impossible, say so in the PR rather than implying
+coverage that does not exist.
 
 ## Framing
 
